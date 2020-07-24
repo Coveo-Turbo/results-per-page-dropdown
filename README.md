@@ -34,8 +34,6 @@ export * from '@coveops/results-per-page-dropdown'
 
 4. Include the component in your template as follows:
 
-Place the component after the last tab in the `coveo-tab-section`
-
 ```html
 <div class="CoveoResultsPerPageDropdown"></div>
 ```
