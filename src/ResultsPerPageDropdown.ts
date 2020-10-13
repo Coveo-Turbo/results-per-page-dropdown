@@ -147,7 +147,9 @@ export class ResultsPerPageDropdown extends Component {
       if (!this.select.options.length) {
         this.buildSelectOptions();
       }
-      const current = this.select.options.length ? this.select.options[this.select.selectedIndex].text : '';
+
+      const nbResults = Coveo.HashUtils.getValue('numberOfResults', Coveo.HashUtils.getHash());
+      const current = nbResults ? nbResults : (this.select.options.length ? this.select.options[this.select.selectedIndex].text : '');
       this.selectStyled.text(current);
 
       for (var i = 0; i < this.select.options.length; i++) {
@@ -186,6 +188,12 @@ export class ResultsPerPageDropdown extends Component {
     }
     public getSelectedOption() {
       return this.select.options[this.select.selectedIndex].value;
+      // if(this.select.selectedIndex) {
+      //   return this.select.options[this.select.selectedIndex].value;
+      // } else {
+      //   return Coveo.HashUtils.getValue('numberOfResults', Coveo.HashUtils.getHash());
+      // }
+      
     }
     public setSelectedOption(value: string) {
       let nextSelectedIndex = _.findIndex(this.select.options, (o)=>{
@@ -200,6 +208,10 @@ export class ResultsPerPageDropdown extends Component {
     }
 
     private selectOptionAction(value:string) {
-      this.resultsPerPage.setResultsPerPage(Number(value));
+      if(this.queryController.firstQuery){
+        this.searchInterface.resultsPerPage = (Number(value));
+      } else {
+        this.resultsPerPage.setResultsPerPage(Number(value));
+      }
     }
 }
