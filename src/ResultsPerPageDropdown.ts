@@ -1,4 +1,4 @@
-import { Component, Dom, LazyInitialization, load, l, IComponentDefinition, ResultsPerPage, IComponentBindings, ComponentOptions, DeviceUtils, IResultsPerPageOptions, $$ } from 'coveo-search-ui';
+import { Component, Dom, LazyInitialization, load, l, IComponentDefinition, ResultsPerPage, IAttributeChangedEventArg, QueryStateModel, IComponentBindings, ComponentOptions, DeviceUtils, IResultsPerPageOptions, $$, QUERY_STATE_ATTRIBUTES, QueryEvents, InitializationEvents } from 'coveo-search-ui';
 import { lazyComponent } from '@coveops/turbo-core';
 
 export interface IResultsPerPageDropdownOptions {
@@ -62,6 +62,12 @@ export class ResultsPerPageDropdown extends Component {
     constructor(public element: HTMLElement, public options: IResultsPerPageDropdownOptions, public bindings: IComponentBindings) {
         super(element, ResultsPerPageDropdown.ID, bindings);
         this.options = ComponentOptions.initComponentOptions(element, ResultsPerPageDropdown, options);
+        
+        this.bind.onRootElement(InitializationEvents.afterComponentsInitialization, () => {
+          
+        });
+
+        this.bind.onQueryState(QueryStateModel.eventTypes.changeOne, QueryStateModel.attributesEnum.numberOfResults, this.handleNumberOfResultsChanged);
 
         this.select = this.getSelectElement();
         $$(this.select).addClass('coveo-custom-select-hidden');
@@ -92,6 +98,12 @@ export class ResultsPerPageDropdown extends Component {
             this.renderSelectStyled();
             this.selectOptionAction(this.getSelectedOption());
         });
+    }
+
+    private handleNumberOfResultsChanged(args: IAttributeChangedEventArg){
+      if(this.getSelectedOption() != args.value.toString()){
+        this.updateSelectedOption(args.value.toString());
+      }
     }
 
     private getSelectElement() {
@@ -148,8 +160,7 @@ export class ResultsPerPageDropdown extends Component {
         this.buildSelectOptions();
       }
 
-      const nbResults = Coveo.HashUtils.getValue('numberOfResults', Coveo.HashUtils.getHash());
-      const current = nbResults ? nbResults : (this.select.options.length ? this.select.options[this.select.selectedIndex].text : '');
+      const current = this.select.options.length ? this.select.options[this.select.selectedIndex].text : '';
       this.selectStyled.text(current);
 
       for (var i = 0; i < this.select.options.length; i++) {
@@ -188,20 +199,16 @@ export class ResultsPerPageDropdown extends Component {
     }
     public getSelectedOption() {
       return this.select.options[this.select.selectedIndex].value;
-      // if(this.select.selectedIndex) {
-      //   return this.select.options[this.select.selectedIndex].value;
-      // } else {
-      //   return Coveo.HashUtils.getValue('numberOfResults', Coveo.HashUtils.getHash());
-      // }
-      
     }
-    public setSelectedOption(value: string) {
+    public updateSelectedOption(value: string) {
       let nextSelectedIndex = _.findIndex(this.select.options, (o)=>{
         return o.value === value;
       });
+      // if value not found falling back on default/first options.
+      nextSelectedIndex = nextSelectedIndex < 0 ? 0 : nextSelectedIndex;
       if(nextSelectedIndex >= 0){
         this.select.value = this.select.options[nextSelectedIndex].value;
-        this.selectOptionAction(this.getSelectedOption());
+        this.searchInterface.resultsPerPage = (Number(this.getSelectedOption()));
         this.selectStyled.text(this.select.options[nextSelectedIndex].text)
         this.selectStyled.removeClass('active');
       }
